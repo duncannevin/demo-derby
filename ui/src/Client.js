@@ -24,11 +24,16 @@ function parseJSON(response) {
 }
 
 
-function openSocket() {
+function openSocket(cb) {
   const ws = new WebSocket('ws://localhost:9000/cars')
-  ws.onopen = () => ws.send(JSON.stringify({request: 'cars'}))
+  ws.onopen = () => {
+    ws.send(JSON.stringify({request: 'cars'}))
+    console.log('WS OPEN')
+    if (cb) cb()
+  }
   ws.onmessage = (msg) => this.setState({cars: JSON.parse(msg.data).cars})
   ws.onerror = (err) => console.error(err)
+  ws.onclose = () => console.log('WS CLOSED')
   this.setState({ws: ws})
 }
 

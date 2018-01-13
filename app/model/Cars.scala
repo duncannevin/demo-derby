@@ -5,7 +5,6 @@ import play.api.libs.json._
 
 object CarsModel {
   var cars = Cars(List(
-    Car(Map("x" -> 10.0, "y" -> 20.0), 0, 100, "Fred", "teal"),
     Car(Map("x" -> 100.0, "y" -> 200.0), 0, 100, "Ted", "pink")
   ))
 }

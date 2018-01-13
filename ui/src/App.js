@@ -36,8 +36,7 @@ class App extends Component {
       })
     })
 
-    Client.openSocket.bind(this)()
-    window.addEventListener('keydown', this.handleKeyDown.bind(this), false);
+    Client.openSocket.bind(this)(() =>  window.addEventListener('keydown', this.handleKeyDown.bind(this), false))
   }
 
   getOwnerData() {
@@ -74,10 +73,13 @@ class App extends Component {
       default:
         break;
     }
-    if (this.state.ws.closed) {
-      Client.openSocket()
+    if (this.state.ws.readyState !== 1) {
+      Client.openSocket.bind(this)(() => {
+        this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
+      })
+    } else {
+      this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
     }
-    this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
   }
 
   render() {

@@ -23,5 +23,14 @@ function parseJSON(response) {
   return response.json();
 }
 
-const Client = { getSummary };
+
+function openSocket() {
+  const ws = new WebSocket('ws://localhost:9000/cars')
+  ws.onopen = () => ws.send(JSON.stringify({request: 'cars'}))
+  ws.onmessage = (msg) => this.setState({cars: JSON.parse(msg.data).cars})
+  ws.onerror = (err) => console.error(err)
+  this.setState({ws: ws})
+}
+
+const Client = { getSummary, openSocket };
 export default Client;

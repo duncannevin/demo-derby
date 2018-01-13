@@ -5,6 +5,9 @@
 # Load index page
 GET     /                           controllers.Assets.at(path="/public", file="index.html")
 
+# Game
+GET     /cars                       controllers.HomeController.carSocket
+
 # An example route
 GET     /summary                    controllers.HomeController.appSummary
 

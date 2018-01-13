@@ -2,8 +2,30 @@
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
+.Demo-floor {
+  height: 500px;
+  width: 900px;
+  background-color: #000;
+  margin: 0 auto;
+  position: relative;
+}
+
+.Car {
+  min-height: 30px;
+  width: 60px;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Car > span {
+  /*transform: rotate(-90deg);*/
+  /*-ms-transform: rotate(-90deg);*/
+  /*-webkit-transform: rotate(-90deg);*/
+  /*position: absolute;*/
+  font-size: 10px;
+  white-space: nowrap
 }
 
 @keyframes App-logo-spin {

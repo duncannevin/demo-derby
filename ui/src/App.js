@@ -1,61 +1,97 @@
-import React, {Component} from 'react';
-import { HashRouter, Route, Link } from 'react-router-dom';
+import React, {Component} from 'react'
+import math from 'mathjs'
 
-import Client from "./Client";
-
-import reactLogo from './images/react.svg';
-import playLogo from './images/play.svg';
-import scalaLogo from './images/scala.png';
+import Client from "./Client"
 
 import './App.css';
 
-const Tech = ({ match }) => {
-  return <div>Current Route: {match.params.tech}</div>
-};
-
+function Car(props) {
+  const c = props.car
+  const style = {
+    backgroundColor: c.color,
+    top: c.position.y,
+    left: c.position.x,
+    transform: 'rotate(' + c.orientation + 'deg)'
+  }
+  return (
+    <div className={'Car ' + c.name} style={style}><span>{c.name} {c.life}-></span></div>
+  )
+}
 
 class App extends Component {
   constructor(props) {
-    super(props);
-    this.state = {title: ''};
+    super(props)
+    this.state = {
+      title: '',
+      ws: null,
+      owner: 'Ted',
+      cars: []
+    }
   }
 
   async componentDidMount() {
     Client.getSummary(summary => {
       this.setState({
         title: summary.content
-      });
-    });
+      })
+    })
+
+    Client.openSocket.bind(this)()
+    window.addEventListener('keydown', this.handleKeyDown.bind(this), false);
+  }
+
+  getOwnerData() {
+    return this.state.cars.find(c => c.name === this.state.owner)
+  }
+
+  calcXY(orientation) {
+    const angle = math.unit(orientation, 'deg'); // returns Unit 60 deg
+    const position = {}
+    position.x = math.cos(angle) * 10
+    position.y = math.sin(angle) * 10
+    return position
+  }
+
+  handleKeyDown(event) {
+    const ownerData = this.getOwnerData()
+    const gotoXY = this.calcXY(ownerData.orientation)
+    switch (event.key) {
+      case 'ArrowUp':
+        ownerData.position.x += gotoXY.x
+        ownerData.position.y += gotoXY.y
+
+        break
+      case 'ArrowDown':
+        ownerData.position.x -= gotoXY.x
+        ownerData.position.y -= gotoXY.y
+        break
+      case 'ArrowLeft':
+        ownerData.orientation -= 10
+        break
+      case 'ArrowRight':
+        ownerData.orientation += 10
+        break
+      default:
+        break;
+    }
+    if (this.state.ws.closed) {
+      Client.openSocket()
+    }
+    this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
   }
 
   render() {
     return (
-      <HashRouter>
-        <div className="App">
-          <h1>Welcome to {this.state.title}!</h1>
-          <nav>
-            <Link to="scala" >
-              <img  width="450" height="300"  src={scalaLogo} alt="Scala Logo" />
-            </Link>
-            <Link to="play" >
-              <img width="400" height="400" src={playLogo} alt="Play Framework Logo" />
-            </Link>
-            <Link to="react" >
-              <img width="400" height="400" src={reactLogo} className="App-logo" alt="React Logo"/>
-            </Link>
-          </nav>
-          <Route path="/:tech" component={Tech} />
-          <div>
-            <h2>Check out the project on GitHub for more information</h2>
-            <h3>
-              <a target="_blank" rel="noopener noreferrer" href="https://github.com/yohangz/scala-play-react-seed">
-                java-play-react-seed
-              </a>
-            </h3>
-          </div>
+      <div className="App" onKeyUp={this.handleKeyDown}>
+        <h1>{this.state.title}</h1>
+        <div>{this.state.key}</div>
+        <div className="Demo-floor">
+          {this.state.cars.map(c => {
+            return <Car car={c} key={c.name}></Car>
+          })}
         </div>
-      </HashRouter>
-    );
+      </div>
+    )
   }
 }
 

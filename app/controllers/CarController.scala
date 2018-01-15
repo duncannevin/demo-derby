@@ -6,17 +6,14 @@ import play.api.mvc._
 import akka.actor._
 import akka.stream.Materializer
 import akka.stream.scaladsl._
-import model.CarsModel.cars
-import model.{Cars, InMessage}
+import model.CarsModel._
+import model.{AddCarForm, InMessage}
 import scala.concurrent.{ExecutionContext, Future}
 import utils.SameOriginCheck
+import play.api.libs.functional.syntax._
 
 @Singleton
-class HomeController @Inject()(implicit ec: ExecutionContext, implicit val system: ActorSystem, materializer: Materializer, cc: ControllerComponents) extends AbstractController(cc) with SameOriginCheck {
-
-  def appSummary = Action {
-    Ok(Json.obj("content" -> "Demolition Derby"))
-  }
+class CarController @Inject()(implicit ec: ExecutionContext, implicit val system: ActorSystem, materializer: Materializer, cc: ControllerComponents) extends AbstractController(cc) with SameOriginCheck {
 
   private type WSMessage = JsValue
 
@@ -42,11 +39,15 @@ class HomeController @Inject()(implicit ec: ExecutionContext, implicit val syste
       inMessage match {
         case InMessage("cars", None) => Json.toJson(cars)
         case InMessage("update", car) => {
-          cars = Cars(cars.cars.map(c => {
+          cars = cars.map(c => {
             if (c.name == car.head.name) {
               car.head
             } else c
-          }))
+          })
+          Json.toJson(cars)
+        }
+        case InMessage("delete", car) => {
+          cars = cars.filterNot(_.name == car.head.name)
           Json.toJson(cars)
         }
         case _ => JsString("FAILED")
@@ -77,7 +78,42 @@ class HomeController @Inject()(implicit ec: ExecutionContext, implicit val syste
         }
     }
   }
+
+  def addCar = Action.async(parse.json) { implicit request: Request[JsValue] =>
+    val vBody = request.body.validate[AddCarForm]
+    if (vBody.isSuccess) {
+      val form = vBody.get
+      for {
+        add <- insertCar(name = form.name, color = form.color)
+      } yield add match {
+        case None => Ok(Json.toJson("Name already exists"))
+        case Some(c) => Ok(Json.toJson(c))
+      }
+    } else Future.successful(BadRequest)
+  }
+
+  def deleteCars = Action {
+    Ok(Json.toJson(removeCars()))
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

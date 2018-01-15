@@ -1,5 +1,3 @@
-[![MIT License][license-badge]][LICENSE]
-
 # Demo Derby
 
 > Smash em mash em, relieve stress! Live multi player demo derby, open app, add car, smash other folks!

@@ -37,7 +37,7 @@ function authenticate(cb) {
       if (cars === 'Name already exists') {
         cb({userInfo: session, cars: this.state.cars})
       } else {
-        console.log(cars)
+        // console.log(cars)
         cb({userInfo: session, cars: cars})
       }
     })

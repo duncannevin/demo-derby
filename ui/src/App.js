@@ -1,5 +1,4 @@
 import React, {Component} from 'react'
-import math from 'mathjs'
 
 import Client from "./Client"
 
@@ -80,42 +79,15 @@ class App extends Component {
     return this.state.cars.find(c => c.name === this.state.owner)
   }
 
-  calcXY(orientation) {
-    const angle = math.unit(orientation, 'deg'); // returns Unit 60 deg
-    const position = {}
-    position.x = math.cos(angle) * 10
-    position.y = math.sin(angle) * 10
-    return position
-  }
-
   handleKeyDown(event) {
     if (!this.state.authenticated) return;
     const ownerData = this.getOwnerData()
-    const gotoXY = this.calcXY(ownerData.orientation)
-    switch (event.key) {
-      case 'ArrowUp':
-        ownerData.position.x += gotoXY.x
-        ownerData.position.y += gotoXY.y
-        break
-      case 'ArrowDown':
-        ownerData.position.x -= gotoXY.x
-        ownerData.position.y -= gotoXY.y
-        break
-      case 'ArrowLeft':
-        ownerData.orientation -= 10
-        break
-      case 'ArrowRight':
-        ownerData.orientation += 10
-        break
-      default:
-        break;
-    }
     if (this.state.ws.readyState !== 1) {
       Client.openSocket.bind(this)(() => {
-        this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
+        this.state.ws.send(JSON.stringify({request: 'update', key: event.key, car: ownerData}))
       })
     } else {
-      this.state.ws.send(JSON.stringify({request: 'update', car: ownerData}))
+      this.state.ws.send(JSON.stringify({request: 'update', key: event.key, car: ownerData}))
     }
   }
 

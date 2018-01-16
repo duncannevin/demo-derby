@@ -10,7 +10,6 @@
   },
   "proxy": "http://localhost:9000",
   "dependencies": {
-    "mathjs": "^3.19.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-keydown": "^1.9.6",

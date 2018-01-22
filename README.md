@@ -4,7 +4,7 @@
 > 
 > App is being built as a fun way to blow off steam during the day. 
 >
-> In progress, so feel free to contribute!
+> In progress, so feel free to contribute! (UI work would be amazing!)
    
 ## Used Versions
 

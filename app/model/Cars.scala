@@ -49,10 +49,10 @@ object CarsModel {
   }
 
   private def edgeCheck(car: Car): Car = car.position match {
-    case p if p("x") < 30.0 => car.copy(position = Map("x" -> 30.0, "y" -> p("y")))
-    case p if p("y") < 30.0 => car.copy(position = Map("x" -> p("x"), "y" -> 30.0))
-    case p if p("x") > 870.0 => car.copy(position = Map("x" -> 870.0, "y" -> p("y")))
-    case p if p("y") > 470.0 => car.copy(position = Map("x" -> p("x"), "y" -> 470.0))
+    case p if p("x") < 30.0 => car.copy(position = Map("x" -> 30.0, "y" -> p("y")), life = car.life - 1)
+    case p if p("y") < 30.0 => car.copy(position = Map("x" -> p("x"), "y" -> 30.0), life = car.life - 1)
+    case p if p("x") > 870.0 => car.copy(position = Map("x" -> 870.0, "y" -> p("y")), life = car.life - 1)
+    case p if p("y") > 470.0 => car.copy(position = Map("x" -> p("x"), "y" -> 470.0), life = car.life - 1)
     case _ => car
   }
 
@@ -61,10 +61,10 @@ object CarsModel {
     cars = cars.filter(_.name != updatedCar.name)
     cars = cars.map { c =>
       if (collideCheck(updatedCar, c)) {
-        updatedCar = car
+        updatedCar = car.copy(life = car.life - 1)
         c.copy(life = c.life - 10)
       } else c
-    }
+    }.filterNot {_.life <= 0 }
     Some(updatedCar :: cars)
   }
 

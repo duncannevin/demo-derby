@@ -28,12 +28,23 @@ function OwnerStats(props) {
   )
 }
 
+function TestCenter(props) {
+  const c = props.car
+  const style = {
+    top: c.position.y,
+    left: c.position.x
+  }
+  return (
+    <div className="testCenter" style={style}></div>
+  )
+}
+
 function Car(props) {
   const c = props.car
   const style = {
     backgroundColor: c.color,
-    top: c.position.y,
-    left: c.position.x,
+    top: c.position.y - 15,
+    left: c.position.x - 30,
     transform: 'rotate(' + c.orientation + 'deg)'
   }
   return (
@@ -142,6 +153,9 @@ class App extends Component {
         <h1>Demolition Derby</h1>
         <div>{this.state.key}</div>
         <div className="Demo-floor">
+          {this.state.cars.map(c => {
+            return <TestCenter car={c} key={'test:' + c.name} />
+          })}
           {this.state.cars.map(c => {
             return <Car car={c} key={c.name}></Car>
           })}

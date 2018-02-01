@@ -4,12 +4,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 object CarsModel {
-  var cars = List(
-    Car(Map("x" -> 400.0, "y" -> 300.0), 20, 100, "tony0", "#fff"),
-    Car(Map("x" -> 200.0, "y" -> 100.0), 91, 100, "jeb90", "#fff123"),
-    Car(Map("x" -> 500.0, "y" -> 200.0), 50, 100, "jen180", "#008080"),
-    Car(Map("x" -> 800.0, "y" -> 400.0), 27, 100, "jill270", "#f2f120")
-  )
+  var cars = List(Car(Map("x" -> 100.0, "y" -> 250.0), 141, 100, "BOB141", "#fff"), Car(Map("x" -> 401.0, "y" -> 250.0), 162, 100, "SAL162", "#f0f0f0"))
 
   private def calcX(currentPosition: Double, operator: Char, orientation: Int): Double = operator match {
     case '+' => currentPosition + (Math.cos(Math.toRadians(orientation)) * 10)
@@ -49,23 +44,31 @@ object CarsModel {
   }
 
   private def edgeCheck(car: Car): Car = car.position match {
-    case p if p("x") < 30.0 => car.copy(position = Map("x" -> 30.0, "y" -> p("y")))
-    case p if p("y") < 30.0 => car.copy(position = Map("x" -> p("x"), "y" -> 30.0))
-    case p if p("x") > 870.0 => car.copy(position = Map("x" -> 870.0, "y" -> p("y")))
-    case p if p("y") > 470.0 => car.copy(position = Map("x" -> p("x"), "y" -> 470.0))
+    case p if p("x") < 30.0 => car.copy(position = Map("x" -> 30.0, "y" -> p("y")), life = car.life - 1)
+    case p if p("y") < 30.0 => car.copy(position = Map("x" -> p("x"), "y" -> 30.0), life = car.life - 1)
+    case p if p("x") > 870.0 => car.copy(position = Map("x" -> 870.0, "y" -> p("y")), life = car.life - 1)
+    case p if p("y") > 470.0 => car.copy(position = Map("x" -> p("x"), "y" -> 470.0), life = car.life - 1)
     case _ => car
   }
 
   def updateCar(car: Car, key: String): Option[List[Car]] = {
+
     var updatedCar = edgeCheck(adjustPosition(car, key))
-    cars = cars.filter(_.name != updatedCar.name)
-    cars = cars.map { c =>
-      if (collideCheck(updatedCar, c)) {
-        updatedCar = car
-        c.copy(life = c.life - 10)
-      } else c
-    }
-    Some(updatedCar :: cars)
+
+    val updatedCars = for {
+      c <- cars.filterNot(_.name == updatedCar.name)
+      collide =
+        if (c.name == updatedCar.name) {
+          updatedCar
+        } else if (collideCheck(updatedCar, c)) {
+          updatedCar = car.copy(life = car.life - 1)
+          c.copy(life = c.life - 10)
+        } else c
+    } yield collide
+
+    cars = (updatedCar :: updatedCars).filter(_.life > 0)
+
+    Some(cars)
   }
 
   def getAllCars: Option[List[Car]] = Some(cars)
@@ -79,7 +82,7 @@ object CarsModel {
     if (cars.exists(_.name == name)) {
       None
     } else {
-      cars = Car(Map("x" -> 200.0, "y" -> 300.0), 0, 100, name, color) :: cars
+      cars = Car(Map("x" -> 200.0, "y" -> 300.0), 0, 10, name, color) :: cars
       Some(cars)
     }
   }
@@ -123,14 +126,15 @@ object AddCarForm {
     ) (AddCarForm.apply _)
 }
 
-case class InMessage(request: String, key: Option[String], car: Option[Car])
+case class InMessage(request: String, key: Option[String], car: Option[Car], newCar: Option[AddCarForm])
 
 object InMessage {
   implicit val jsonFormat = Json.format[InMessage]
   implicit val inMessageReads: Reads[InMessage] = (
     (JsPath \ "request").read[String] and
       (JsPath \ "key").readNullable[String] and
-      (JsPath \ "car").readNullable[Car]
+      (JsPath \ "car").readNullable[Car] and
+      (JsPath \ "newCar").readNullable[AddCarForm]
     ) (InMessage.apply _)
 }
 

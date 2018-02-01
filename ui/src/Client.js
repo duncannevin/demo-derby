@@ -1,61 +1,56 @@
 /* eslint-disable no-undef */
-function addCar(body, cb) {
-  return fetch(`/addCar`, {
-    method: `POST`,
-    headers: {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
-    .then(checkStatus)
-    .then(parseJSON)
-    .then(cb)
-}
 
-function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300 && response.status !== 409) {
-    return response;
-  }
-  const error = new Error(`HTTP Error ${response.statusText}`);
-  error.status = response.statusText;
-  error.response = response;
-  console.log(error); // eslint-disable-line no-console
-  throw error;
-}
-
-function parseJSON(response) {
-  return response.json();
-}
-
-function authenticate(cb) {
-  const session = JSON.parse(localStorage.getItem("CAR_INFO"))
-  if (session === null) {
-    cb({userInfo: null, cars: null})
-  } else {
-    addCar(session, (cars) => {
-      if (cars === 'Name already exists') {
-        cb({userInfo: session, cars: this.state.cars})
-      } else {
-        // console.log(cars)
-        cb({userInfo: session, cars: cars})
-      }
-    })
-  }
-}
+let ws;
+const socketLoc = 'ws://localhost:9000/cars'
 
 function openSocket(cb) {
-  const ws = new WebSocket('ws://localhost:9000/cars')
-  ws.onopen = () => {
-    ws.send(JSON.stringify({request: 'cars'}))
+  ws = new WebSocket(socketLoc)
+  onOpen(() => {
     console.log('WS OPEN')
-    if (cb) cb()
-  }
-  ws.onmessage = (msg) => this.setState({cars: JSON.parse(msg.data)})
-  ws.onerror = (err) => console.error(err)
-  ws.onclose = () => console.log('WS CLOSED')
-  this.setState({ws: ws})
+    cb()
+  })
+  onError((err) => console.error('WS FAILED', err))
+  onClose(() => console.log('WS CLOSED'))
 }
 
-const Client = { openSocket, addCar, authenticate };
+function authenticate(newCar, cb) {
+  onMessage(cb)
+  if (newCar !== null) {
+    ws.send(JSON.stringify({request: 'authenticate', newCar: newCar}))
+  } else  ws.send(JSON.stringify({request: 'cars'}))
+}
+
+function removeCar(car, cb) {
+  onMessage(cb)
+  ws.send(JSON.stringify({request: 'delete', car: car}))
+}
+
+function moveCar({ownerData, key}, cb) {
+  onMessage(cb)
+  if (ws.readyState !== 1) {
+    openSocket.bind(this)(() => {
+      ws.send(JSON.stringify({request: 'update', key: key, car: ownerData}))
+    })
+  } else {
+    ws.send(JSON.stringify({request: 'update', key: key, car: ownerData}))
+  }
+}
+
+function onOpen(cb) {
+  ws.onopen = cb
+}
+
+function onMessage(cb) {
+  ws.onmessage = cb
+}
+
+function onError(cb) {
+  ws.onerror = cb
+}
+
+function onClose(cb) {
+  ws.onclose = cb
+}
+
+const Client = { openSocket, authenticate, removeCar, moveCar };
 export default Client;

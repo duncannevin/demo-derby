@@ -1,19 +1,18 @@
 import React, {Component} from 'react'
 
-import Client from "./Client"
-
-import './App.css';
+import Client from './Client'
+import './App.css'
 
 function AddCar(props) {
 
   return (
     <div>
-    <div>Add your car!</div>
-    <form>
-      <input type="text" value={props.nameValue} placeholder="FrankyStanky!" onChange={props.updateName}/>
-      <input type="color" value={props.colorValue} onChange={props.updateColor}/>
-      <input type="submit" value="Add a car!" onClick={props.submit}/>
-    </form>
+      <div>Add your car!</div>
+      <form>
+        <input type="text" value={props.nameValue} placeholder="FrankyStanky!" onChange={props.updateName}/>
+        <input type="color" value={props.colorValue} onChange={props.updateColor}/>
+        <input type="submit" value="Add a car!" onClick={props.submit}/>
+      </form>
     </div>
   )
 }
@@ -62,11 +61,10 @@ class App extends Component {
     this.handleKeyDown = this.handleKeyDown.bind(this)
     this.getOwnerData = this.getOwnerData.bind(this)
     this.deleteCar = this.deleteCar.bind(this)
+    this.updateCars = this.updateCars.bind(this)
     this.state = {
       title: '',
-      ws: null,
       authenticated: false,
-      owner: null,
       cars: [],
       addCarForm: {
         name: '',
@@ -76,42 +74,59 @@ class App extends Component {
   }
 
   async componentDidMount() {
-    Client.openSocket.bind(this)(() =>  {
-      window.addEventListener('keydown', this.handleKeyDown.bind(this), false)
-      Client.authenticate.bind(this)(({userInfo, cars}) => {
-        if (userInfo !== null) {
-          this.setState({owner: userInfo.name}, () => this.setState({cars: cars}, () => this.setState({authenticated: true})))
-        }
+    Client.openSocket(() => {
+      const carInfo = JSON.parse(localStorage.getItem("CAR_INFO"))
+      Client.authenticate.bind(this)(carInfo, (msg) => {
+        this.updateCars(msg, (cars) => {
+          const authenticated = !!carInfo
+          if (authenticated) {
+            this.setState({authenticated: authenticated, addCarForm: carInfo, cars: cars}, this.startKeyDown)
+          } else this.setState({authenticated: authenticated, cars: cars})
+        })
       })
     })
   }
 
+  stopKeyDown() {
+    window.removeEventListener('keydown', this.handleKeyDown)
+  }
+
+  startKeyDown() {
+    window.addEventListener('keydown', this.handleKeyDown)
+  }
+
   getOwnerData() {
-    return this.state.cars.find(c => c.name === this.state.owner)
+    return this.state.cars.find(c => c.name === this.state.addCarForm.name)
   }
 
   handleKeyDown(event) {
     if (!this.state.authenticated) return;
     const ownerData = this.getOwnerData()
-    if (this.state.ws.readyState !== 1) {
-      Client.openSocket.bind(this)(() => {
-        this.state.ws.send(JSON.stringify({request: 'update', key: event.key, car: ownerData}))
+    Client.moveCar({ownerData: ownerData, key: event.key}, (msg) => {
+      this.updateCars(msg, (cars) => {
+        const name = this.state.addCarForm.name
+        if (!cars.find(c => c.name === name)) {
+          this.resetUserState(() => this.setState({cars: cars}))
+        } else this.setState({cars: cars})
       })
-    } else {
-      this.state.ws.send(JSON.stringify({request: 'update', key: event.key, car: ownerData}))
-    }
+    })
+  }
+
+  updateCars(msg, cb) {
+    const cars = JSON.parse(msg.data)
+    if (cb) cb(cars)
+    else this.setState({cars: cars})
   }
 
   addCar(event) {
-    Client.addCar(this.state.addCarForm, (cars) => {
-      if (cars === 'Name already exists') {
-        alert('Name already exists in game!');
-      } else {
-        localStorage.setItem('CAR_INFO', JSON.stringify(this.state.addCarForm))
-        this.setState({cars: cars}, () => this.setState({owner: this.state.addCarForm.name}, this.setState({authenticated: true})))
-      }
-    })
     event.preventDefault()
+    const addCarForm = this.state.addCarForm
+    Client.authenticate.bind(this)(addCarForm, (msg) => {
+      localStorage.setItem("CAR_INFO", JSON.stringify(addCarForm))
+      this.updateCars(msg, (cars) => {
+        this.setState({cars: cars, authenticated: true}, this.startKeyDown)
+      })
+    })
   }
 
   updateAddForm(event, field) {
@@ -124,15 +139,23 @@ class App extends Component {
 
   updateColor(event) { this.updateAddForm(event, 'color') }
 
-  deleteCar() {
-    this.state.ws.send(JSON.stringify({request: 'delete', car: this.getOwnerData()}))
-    this.setState({authenticated: false})
-    this.setState({owner: null})
-    this.setState({addCarForm: {
+  resetUserState(cb) {
+    const emptyForm = {
       name: '',
       color: '#66FF66'
-    }})
-    localStorage.removeItem('CAR_INFO')
+    }
+    this.setState({authenticated: false, owner: null, addCarForm: emptyForm}, () => {
+      this.stopKeyDown()
+      localStorage.removeItem('CAR_INFO')
+      if (cb) cb()
+    })
+  }
+
+  deleteCar() {
+    Client.removeCar(this.getOwnerData(), (msg) => {
+      this.resetUserState()
+      this.updateCars(msg)
+    })
   }
 
   render() {

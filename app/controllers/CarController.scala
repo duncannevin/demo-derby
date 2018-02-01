@@ -39,9 +39,10 @@ class CarController @Inject()(implicit ec: ExecutionContext, implicit val system
     Flow[WSMessage].map { msg =>
       val inMessage = msg.validate[InMessage].get
       inMessage match {
-        case InMessage("cars", None, None) => Json.toJson(getAllCars.getOrElse(List.empty[Car]))
-        case InMessage("update", key, car) => Json.toJson(updateCar(car.head, key.head).getOrElse(List.empty[Car]))
-        case InMessage("delete", None, car) => Json.toJson(deleteCar(car.head).getOrElse(List.empty[Car]))
+        case InMessage("authenticate", None, None, newCar) => Json.toJson(insertCar(newCar.head.name, newCar.head.color).getOrElse(cars))
+        case InMessage("cars", None, None, None) => Json.toJson(getAllCars.getOrElse(List.empty[Car]))
+        case InMessage("update", key, car, None) => Json.toJson(updateCar(car.head, key.head).getOrElse(List.empty[Car]))
+        case InMessage("delete", None, car, None) => Json.toJson(deleteCar(car.head).getOrElse(List.empty[Car]))
         case _ => JsString("FAILED")
       }
     }.via(Flow.fromSinkAndSource(chatSink, chatSource)).log("userFlow")

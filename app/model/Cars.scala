@@ -52,9 +52,7 @@ object CarsModel {
   }
 
   def updateCar(car: Car, key: String): Option[List[Car]] = {
-
     var updatedCar = edgeCheck(adjustPosition(car, key))
-
     val updatedCars = for {
       c <- cars.filterNot(_.name == updatedCar.name)
       collide =

@@ -7,8 +7,8 @@ GET     /                           controllers.Assets.at(path="/public", file="
 
 # Game
 GET     /cars                       controllers.CarController.carSocket
-POST    /addCar                     controllers.CarController.addCar
-GET     /v1/deleteCars                 controllers.CarController.deleteCars
+#POST    /addCar                     controllers.CarController.addCar
+#GET     /v1/deleteCars                 controllers.CarController.deleteCars
 
 # Map static resources from the /public folder to the file resource path
 GET     /*file                      controllers.Assets.at(path="/public", file)

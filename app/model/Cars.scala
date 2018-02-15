@@ -3,7 +3,7 @@ package model
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-object CarsModel {
+trait CarsModel {
   var cars = List(Car(Map("x" -> 100.0, "y" -> 250.0), 141, 100, "BOB141", "#fff"), Car(Map("x" -> 401.0, "y" -> 250.0), 162, 100, "SAL162", "#f0f0f0"))
 
   private def calcX(currentPosition: Double, operator: Char, orientation: Int): Double = operator match {
@@ -122,17 +122,5 @@ object AddCarForm {
     (JsPath \ "name").read[String] and
       (JsPath \ "color").read[String]
     ) (AddCarForm.apply _)
-}
-
-case class InMessage(request: String, key: Option[String], car: Option[Car], newCar: Option[AddCarForm])
-
-object InMessage {
-  implicit val jsonFormat = Json.format[InMessage]
-  implicit val inMessageReads: Reads[InMessage] = (
-    (JsPath \ "request").read[String] and
-      (JsPath \ "key").readNullable[String] and
-      (JsPath \ "car").readNullable[Car] and
-      (JsPath \ "newCar").readNullable[AddCarForm]
-    ) (InMessage.apply _)
 }
 

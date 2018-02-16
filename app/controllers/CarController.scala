@@ -45,22 +45,6 @@ class CarController @Inject()(
       CarsActor.props(out)
     }.via(Flow.fromSinkAndSource(chatSink, chatSource)).log("userFlow")
   }
-
-  def addCar = Action(parse.json) { implicit request: Request[JsValue] =>
-    val vBody = request.body.validate[AddCarForm]
-    if (vBody.isSuccess) {
-      val form = vBody.get
-      val add = insertCar(name = form.name, color = form.color)
-      add match {
-        case None => Ok(Json.toJson("Name already exists"))
-        case Some(c) => Ok(Json.toJson(c))
-      }
-    } else BadRequest
-  }
-
-  def deleteCars = Action {
-    Ok(Json.toJson(removeCars()))
-  }
 }
 
 

@@ -15,7 +15,7 @@ class CarsActor(out: ActorRef)() extends Actor with CarsModel {
         request => self ! request
       }
     case socketResponse: SocketResponse =>
-      out ! Json.toJson(socketResponse.response)
+      out ! socketResponse.response
     case inMessage: InMessage =>
       inMessage match {
         case InMessage("authenticate", None, None, newCar) if newCar.isDefined && newCar.head.isInstanceOf[AddCarForm] =>
@@ -45,7 +45,11 @@ object CarsActor {
   def props(out: ActorRef) = Props(new CarsActor(out)())
 }
 
-case class SocketResponse(response: ResponseData)
+case class SocketResponse(response: JsValue)
+
+object SocketResponse {
+  def apply(response: ResponseData): SocketResponse = SocketResponse(Json.toJson(response))
+}
 
 case class ResponseData(success: Boolean, request: String, cars: List[Car])
 

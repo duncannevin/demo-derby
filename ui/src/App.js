@@ -29,12 +29,36 @@ function OwnerStats(props) {
 
 function TestCenter(props) {
   const c = props.car
+  const corners = c.testCorners
+  // console.log(corners)
   const style = {
     top: c.position.y,
     left: c.position.x
   }
+  const nwStyle = {
+    top: corners[0][1],
+    left: corners[0][0]
+  }
+  const neStyle = {
+    top: corners[1][1],
+    left: corners[1][0]
+  }
+  const swStyle = {
+    top: corners[2][1],
+    left: corners[2][0]
+  }
+  const seStyle = {
+    top: corners[3][1],
+    left: corners[3][0]
+  }
   return (
-    <div className="testCenter" style={style}></div>
+    <div>
+      <div className="testCenter" style={nwStyle}></div>
+      <div className="testCenter" style={neStyle}></div>
+      <div className="testCenter" style={swStyle}></div>
+      <div className="testCenter" style={seStyle}></div>
+      <div className="testCenter" style={style}></div>
+    </div>
   )
 }
 
@@ -113,7 +137,7 @@ class App extends Component {
   }
 
   updateCars(msg, cb) {
-    const cars = JSON.parse(msg.data)
+    const cars = JSON.parse(msg.data).cars
     if (cb) cb(cars)
     else this.setState({cars: cars})
   }

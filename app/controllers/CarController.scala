@@ -8,7 +8,6 @@ import akka.actor._
 import akka.stream.Materializer
 import akka.stream.scaladsl._
 import actors.CarsActor
-import model.AddCarForm
 import play.api.libs.streams.ActorFlow
 
 import scala.concurrent.ExecutionContext
@@ -20,7 +19,7 @@ class CarController @Inject()(
                                implicit val system: ActorSystem,
                                materializer: Materializer,
                                cc: ControllerComponents,
-                             ) extends AbstractController(cc) with SameOriginCheck with model.CarsModel {
+                             ) extends AbstractController(cc) with SameOriginCheck {
 
   private type WSMessage = JsValue
 
@@ -40,7 +39,7 @@ class CarController @Inject()(
   /*
   * Handles car websocket
   * */
-  def carSocket = WebSocket.accept[JsValue, JsValue] { request =>
+  def carSocket = WebSocket.accept[WSMessage, WSMessage] { request =>
     ActorFlow.actorRef { out =>
       CarsActor.props(out)
     }.via(Flow.fromSinkAndSource(chatSink, chatSource)).log("userFlow")
